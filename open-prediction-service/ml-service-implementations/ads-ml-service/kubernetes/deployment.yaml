@@ -1,22 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ads-ml-service-deployment
-  labels:
-    app: open-prediction
+  name: {{KUB_DEPLOYMENT_NAME}}
 spec:
   selector:
     matchLabels:
-      app: open-prediction
-  replicas: 1                            # Compact version (Single Docker file) of OPS can not support multiple replicas
+      run: open-prediction
+  replicas: 1
   template:
     metadata:
       labels:
-        app: open-prediction
+        run: open-prediction
     spec:
       containers:
-      - name: open-prediction
-        image: "{{IMAGE_URL}}"           # Replace {{IMAGE_URL}} by actual image repository address
+      - name: "open-prediction"
         imagePullPolicy: Always
-        ports:                           # This list provides extra information
-        - containerPort: 8080            # Port number is defined in OPS Application
+        image: "us.icr.io/{{IMAGE_REPO}}/{{IMAGE_NAME}}:{{IMAGE_TAG}}"
+        ports:
+        - containerPort: 8080
