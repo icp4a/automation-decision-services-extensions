@@ -1,82 +1,88 @@
 # Open Prediction Service
 
-The Open Prediction Service API is an effort to provide an Open API that enables unsupported native ML Providers in Decision Designer or Decision Runtime.
+The Open Prediction Service API is an effort to provide an OpenAPI that enables unsupported native ML Providers in Decision Designer or Decision Runtime.
 
 Thanks to this service, as any third party ML tools can be integrated to match the API specifications, third party ML tools can be reached out the same way for ML model discovery and invocation in Decision Designer or Decision Runtime.
 The Open Prediction Service API is suitable for both ML proxy service and custom ML service which provides a lot of flexibility and different level support.
 
 ![OPS](doc/ops.png)
 
-In this repository we provide:
-- a reference implementation for [scikit-learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.ai/)
-- an Open Prediction Service Java Client SDK
+In this repository we provide only the Open Prediction Service OpenAPI specification.
 
-### Reference implementation for [scikit-learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.ai/)
+You can head to our [Open Prediction Service Hub](https://github.com/IBM/open-prediction-service-hub) Open Source repository that has many python implementations using [scikit-learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.ai/) but also proxies to [IBM Watson Machine Learning](https://www.ibm.com/cloud/machine-learning) or [Amazon SageMaker](https://aws.amazon.com/sagemaker/) for example.
 
-We provide an Open Source implementation of this service based on two well known python Machine Learning SDK : [scikit-learn](https://scikit-learn.org/) and [XGBoost](https://xgboost.ai/) based on a docker container for easier deployments.
+## OpenAPI specification
 
-This reference implementation is called `ads-ml-service`.
+The Open Prediction Service is available as an [OpenAPI v3 specification](open-prediction-service.yaml). 
 
-Instructions to build an use are inside the [ml-service-implementations/ads-ml-service](ml-service-implementations/ads-ml-service/README.md) folder.
+Our specification takes the following hypothesis into account. We manipulate **Models** and **Endpoints**.
 
-### Open Prediction Service Java Client SDK
-We also provide a Java SDK based on the Open Prediction Service API to enable any java based application to use this Open architecture.
+**Model**: represents a trained Machine Learning Model that has an (optional) input and output contract. A **Model** can have one or many **Endpoints**. 
 
-Instructions to build an use are inside the [ops-client-sdk](ops-client-sdk) folder.
+**Endpoint**: represents the deployment of a **Model** and is the entry point to execute the prediction carried by the **Model**
 
-## Open API specification
+**Input Schema**: This is a part of the **Model** information that will provide consumers of the service the necessary information to construct the payload to call the prediction endpoint.
 
-The Open Prediction Service is available as an [Open API v3 specification](open-prediction-service.json). The specification has two main sections:
+**Output Schema**: This is a part of the **Model** information that will provide consumers of the service the necessary information to understand the response fron the prediction endpoint.
 
-- *Admin* section for describing endpoints for uploading, getting or deleting models into the the server.
-- *ML* section that covers the prediction call endpoint
+This specification has four main sections. These sections also represent the capabilities an implementation of this OpenApi is able to provide:
 
-All the types manipulated by the different endpoints are described in the *Schemas* section below.
+- **info** section for getting server information and capabilities.
+- **discover** for the discovery of models and related endpoints.
+- **manage** for adding, altering or deleting models and endpoints (optional).
+- **run** for model prediction invocation
 
-Python tests based on *pytest* are provided to insure integration in Decision Designer or Decision Runtime.
+All the types manipulated by the different endpoints are described in the **Schemas** section of the OpenApi.
 
-``` bash
-pytest api-tests/ --url <ENPOINT_URL>
+![OpenAPI](doc/OPS-OpenApi.png)
 
-# For example:
-pytest api-tests/ --url http://localhost:8080/
-```
+### *info* section
 
-![OpenAPI](doc/ops-OpenApi.jpg)
+#### `/capabilities` `GET`
 
-### *Admin* section
+![capabilities](doc/ops-capabilities-get.png)
 
-#### Status `/v1/status` `GET`
+This endpoint can be used to get a list of supported operation 
+(any subset of `{info, discover, manage, run}`) of the service.
 
-![status](doc/ops-status.jpg)
+#### `/info` `GET`
 
-This endpoint can be used to test the availability of the service. It returns the number of models it is serving.
+![info](doc/ops-info-get.png)
 
-#### Models `/v1/models`
+This endpoint can be used to test the availability of the service. 
+It returns runtime information.
 
-##### Retrieve `GET` 
+### *discover* section
 
-![ops-get-models](doc/ops-get-models.jpg)
+This section is used to retrieve model & endpoint information. 
 
-This endpoint will return the list of the models it is serving.
+* `/models[/{model_id}]` `GET`
+* `/endpoints[/{endpoint_id}]` `GET`
 
-##### Upload `POST`
+![ops-get-models](doc/ops-models-get.png)
+![ops-get-endpoints](doc/ops-endpoints-get.png)
 
-![ops-post-models](doc/ops-post-models.jpg)
+Those endpoints will return the selected resources. Model is the
+input/output signature of predictive model and Endpoint is the "binary model".
+A predictive model is the combination of a model and an endpoint.
 
-This endpoint will allow to upload a pickle file as a new serving model.
+### *run* section
 
-##### Remove `DELETE`
+#### `/predictions` `POST`
 
-##### ![ops-delete-models](doc/ops-delete-models.jpg)
+![ops-predictions-post](doc/ops-predictions-post.png)
 
-This endpoint will remove a given model.
+This endpoint serves all prediction requests. 
+Each invocation needs to contain endpoint information and model inputs that represented as key-value pairs.
 
-#### *ML* section
+### *manage* section
 
-##### Call prediction `/v1/invocations` `POST`
+The section `manage` is not mandatory for OPS compatible implementations. It 
+is designed to facilitate the usage of non-proxy OPS implementations.
 
-![ops-post-invocations](doc/ops-post-invocations.jpg)
+This section allows model & endpoint to be created, altered, deleted at the runtime. 
+
+![ops-manage](doc/ops-manage.png)
 
 ### License
 Apache License Version 2.0, January 2004.
