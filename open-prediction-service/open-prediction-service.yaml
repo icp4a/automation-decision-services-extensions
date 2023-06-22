@@ -213,7 +213,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /models/{model_id}/binary:
+  /models/{model_id}/download:
     get:
       tags:
         - discover
@@ -871,6 +871,8 @@ components:
           - discover
           - manage
           - prediction
+          - download
+          - metadata
         managed_capabilities:
           supported_input_data_structure:
             - "auto"
@@ -895,6 +897,10 @@ components:
         - discover
         - manage
         - run
+        # Download model binary
+        - download
+        # Inspect model specific metadata, for example for PMML model return subType (Scorecard, Ruleset)
+        - metadata
     Parameter:
       title: Parameter
       description: Parameter for ml model invocation
@@ -952,36 +958,17 @@ components:
       type: object
       title: Additional Model Information
       required:
+        - modelPackage
         - modelType
       properties:
+        modelPackage:
+          type: string
+          description: The file format of binary model
+          example: pmml
         modelType:
           type: string
-          description: the type of imported binary
-          example: pmml
-      discriminator:
-        propertyName: modelType
-        mapping:
-          pmml: '#/components/schemas/AdditionalPMMLModelInfo'
-          pickle: '#/components/schemas/AdditionalPickleModelInfo'
-        oneOf:
-          - $ref: '#/components/schemas/AdditionalPMMLModelInfo'
-          - $ref: '#/components/schemas/AdditionalPickleModelInfo'
-    AdditionalPMMLModelInfo:
-      allOf:
-        - $ref: '#/components/schemas/AdditionalModelInfo'
-        - properties:
-            modelSubType:
-              type: string
-              description: model sub type
-              example: ruleset
-    AdditionalPickleModelInfo:
-      allOf:
-        - $ref: '#/components/schemas/AdditionalModelInfo'
-        - properties:
-            pickleProtoVersion:
-              type: string
-              description: the version of pickle protocol
-              example: 4
+          description: Model type of binary model
+          example: RuleSetModel
   parameters:
     ModelIDParam:
       in: path
